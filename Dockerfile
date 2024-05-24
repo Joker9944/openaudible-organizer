@@ -7,5 +7,5 @@ RUN ./build.sh
 
 FROM debian:$base_image_version
 RUN apt-get update && apt-get install --yes jq inotify-tools && apt-get clean
-ENTRYPOINT ["/bin/bash", "/usr/local/bin/openaudible-organiser", "--no-colour"]
-COPY --from=build --chmod=755 /script/template.sh /usr/local/bin/openaudible-organiser
+ENTRYPOINT ["/bin/bash", "/usr/local/bin/openaudible-organizer", "--no-colour"]
+COPY --from=build --chmod=755 /script/template.sh /usr/local/bin/openaudible-organizer
