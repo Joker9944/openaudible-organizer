@@ -1,93 +1,53 @@
-bash-script-template
-====================
 
-[![license](https://img.shields.io/github/license/ralish/bash-script-template)](https://choosealicense.com/licenses/mit/)
+# openaudible-organizer
 
-A *Bash* scripting template incorporating best practices & several useful functions.
+A simple automatic organizer written in bash script for openaudible libraries. The organizer watches the openaudible library and mirrors files by hardlinking them into an organized library.
 
-- [Motivation](#motivation)
-- [Files](#files)
-- [Usage](#usage)
-- [Controversies](#controversies)
-- [License](#license)
 
-Motivation
-----------
+## Usage/Examples
 
-I write Bash scripts frequently and realised that I often copied a recent script whenever I started writing a new one. This provided me with a basic scaffold to work on and several useful helper functions I'd otherwise likely end up duplicating.
+There are two ways to use the script. As a docker container or use of the script directly. The recommended way is using docker.
 
-Rather than continually copying old scripts and flensing the irrelevant code, I'm publishing a more formalised template to ease the process for my own usage and anyone else who may find it helpful. Suggestions for improvements are most welcome.
-
-Files
------
-
-| File            | Description                                                                                     |
-| --------------- |------------------------------------------------------------------------------------------------ |
-| **template.sh** | A fully self-contained script which combines `source.sh` & `script.sh`                          |
-| **source.sh**   | Designed for sourcing into scripts; contains only those functions unlikely to need modification |
-| **script.sh**   | Sample script which sources in `source.sh` and contains those functions likely to be modified   |
-| **build.sh**    | Generates `template.sh` by combining `source.sh` & `template.sh` (just a helper script)         |
-
-Usage
------
-
-Being a Bash script you're free to *slice-and-dice* the source as you see fit.
-
-The following steps outline what's typically involved to help you get started:
-
-1. Choose between using either:
-    1. `template.sh` (fully self-contained)
-    2. `script.sh` with `source.sh` (source in most functions)
-2. Depending on your choice open `template.sh` or `script.sh` for editing
-3. Update the `script_usage()` function with additional usage guidance
-4. Update the `parse_params()` function with additional script parameters
-5. Add additional functions to implement the desired functionality
-6. Update the `main()` function to call your additional functions
-
-### Adding a `hostname` parameter
-
-The following contrived example demonstrates how to add a parameter to display the system's hostname.
-
-Update the `script_usage()` function by inserting the following before the `EOF`:  
-
-```plain
-    --hostname                  Display the system's hostname
-```
-
-Update the `parse_params()` function by inserting the following before the default case statement (`*)`):  
+### Docker Example
 
 ```bash
---hostname)
-    hostname=true
-    ;;
+$ docker run -v "/mnt/media-data:/media" ghcr.io/joker9944/openaudible-organiser:latest /media/openaudible /media/Audiobooks
 ```
 
-Update the `main()` function by inserting the following after the existing initialisation statements:  
+### Script Help
+```bash
+$ docker run --rm ghcr.io/joker9944/openaudible-organiser:latest --help
+usage: openaudible-organiser [options] openaudible_library_dir organised_library_dir
+     -h|--help                  Displays this help
+     -c|--copy                  Copy files insted of hardlinking
+     -v|--verbose               Displays verbose output
+    -nc|--no-colour             Disables colour output
+    -cr|--cron                  Run silently unless we encounter an error
+```
+## Caveats
+
+By default the organizer works by [hardlinking](https://en.wikipedia.org/wiki/Hard_link) files.
+
+This imposes a few requirements, namely:
+
+* The filesystem must support hardlinks
+* The link source and target must be on the same filesystem
+
+If your setup does not meet this requirements there is the option to copy files instead of linking.
+
+### Docker Copy Example
 
 ```bash
-if [[ -n ${hostname-} ]]; then
-    pretty_print "Hostname is: $(hostname)"
-fi
+$ docker run -v "/mnt/media-data:/media" ghcr.io/joker9944/openaudible-organiser:latest --copy /media/openaudible /media/Audiobooks
 ```
+## Motivation
 
-Controversies
--------------
+This project has been done a few times now in different languages. But all existing solutions either just copy the files which doubles the size of the library or require some manual steps each time the library should be organized. I disliked both downsides so I cooked up a solution which solves these issues.
+## Acknowledgments
 
-The Bash scripting community is an opinionated one. This is not a bad thing, but it does mean that some decisions made in this template aren't going to be agreed upon by everyone. A few of the most notable ones are highlighted here with an explanation of the rationale.
+Inspirations and related projects
 
-### errexit (*set -e*)
-
-Conventional wisdom has for a long time held that at the top of every Bash script should be `set -e` (or the equivalent `set -o errexit`). This modifies the behaviour of Bash to exit immediately when it encounters a non-zero exit code from an executed command if it meets certain criteria. This would seem like an obviously useful behaviour in many cases, however, controversy arises both from the complexity of the grammar which determines if a command is eligible for this behaviour and the fact that there are many circumstances where a non-zero exit code is expected and should not result in termination of the script. An excellent overview of the argument against this option can be found in [BashFAQ/105](https://mywiki.wooledge.org/BashFAQ/105).
-
-My personal view is that the benefits of `errexit` outweigh its disadvantages. More importantly, a script which is compatible with this option will work just as well if it is disabled, however, the inverse is not true. By being compatible with `errexit` those who find it useful can use this template without modification while those opposed can simply disable it without issue.
-
-### nounset (*set -u*)
-
-By enabling `set -u` (or the equivalent `set -o nounset`) the script will exit if an attempt is made to expand an unset variable. This can be useful both for detecting typos as well as potentially premature usage of variables which were expected to have been set earlier. The controvery here arises in that many Bash scripting coding idioms rely on referencing unset variables, which in the absence of this option are perfectly valid. Further discussion on this option can be found in [BashFAQ/112](https://mywiki.wooledge.org/BashFAQ/112).
-
-This option is enabled for the same reasons as described above for `errexit`.
-
-License
--------
-
-All content is licensed under the terms of [The MIT License](LICENSE).
+ - [bash-script-template](https://github.com/ralish/bash-script-template) Template for this project
+ - [openaudible-audiobookshelf-watcher](https://github.com/victorbutler/openaudible-audiobookshelf-watcher) Similar project writen in TypeScript
+ - [openaudible-create-author-directories](https://github.com/danielmbond/openaudible-create-author-directories) Similar project writen in PowerShell
+ - [OpenAudible Book Organizer](https://github.com/orbitalteapot/OpenAudible-BookOrganizer) Similar project writen in C#
