@@ -32,6 +32,7 @@ function script_usage() {
 usage: $(basename "$0") [options] openaudible_library_dir organised_library_dir
      -h|--help                  Displays this help
      -c|--copy                  Copy files insted of hardlinking
+     -w|--watch                 Watch the OpenAudible library dir for changes
      -v|--verbose               Displays verbose output
     -nc|--no-colour             Disables colour output
     -cr|--cron                  Run silently unless we encounter an error
@@ -57,6 +58,9 @@ function parse_params() {
                 ;;
             -c | --copy)
                 copy=true
+                ;;
+            -w | --watch)
+                watch=true
                 ;;
             -v | --verbose)
                 # shellcheck disable=SC2034
@@ -94,11 +98,13 @@ function parse_params() {
 }
 
 # DESC: Check if all required dependencies are installed
-# ARGS: None
+# ARGS: $1 (required): Watch switch
 # OUTS: None
 function check_dependencies() {
     check_binary jq true
-    check_binary inotifywait true
+    if [[ -n "$1" ]]; then
+        check_binary inotifywait true
+    fi
 }
 
 # DESC: Create organised link
@@ -189,7 +195,7 @@ function main() {
     parse_params "$@"
     cron_init
     colour_init
-    check_dependencies
+    check_dependencies "${watch-}"
 
     if [[ ! -f "$openaudible_library_dir/books.json" ]]; then
         script_exit "Could not find books.json in $openaudible_library_dir!" 1
@@ -207,6 +213,10 @@ function main() {
         verbose_print "Handling $file" "$fg_white"
         handle_file "$file" "$organised_library_dir"
     done
+
+    if [[ -z ${watch-} ]]; then
+        exit 0
+    fi
 
     pretty_print "Listening for changes in $openaudible_library_dir/books" \
       "$fg_white"
